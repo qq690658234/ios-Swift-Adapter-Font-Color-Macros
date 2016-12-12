@@ -1,0 +1,56 @@
+#Swift版本的屏幕和颜色适配
+	
+	
+这阵子一直在自学Swift, 因为之前iOS的开发一直用Objective-C, 所以习惯了C语言那种宏定义方式, Swift作为一款更加安全的语言, 放弃了C语言中的宏定义, 有效的防止预编译时代码宏替换的安全隐患, 但是也并非不能进行宏定义, 在这里我们可以像java一样进行全局常量的定义, 一样的方便快捷. 简单的宏通过常量设置即可, 复杂的宏就需要使用函数来返回了, 但是使用起来也会很方便, 下面我以工作中总结的一些经验，总结了一些Swift版本下4/4.7/5.5英寸屏幕适配，以及颜色适配宏:
+
+
+屏幕缩放以iphone6屏幕尺寸为基础，通过设备与iphone6的比较返回一个比例，通过比例进行横向和纵向的缩放：
+	
+	func Lhw_RateW() -> CGFloat{
+	  return (Lhw_ScreenW()/375)
+	}
+	
+高度适配上因为iphone4/4s不是按照之后0.8+：1的比例缩放，所以按照4寸屏一并处理（iphone4很多开发公司已经不支持兼容，我们也不作过多的考虑）：	
+
+	func Lhw_RateH() -> CGFloat{
+    var heighttmp:CGFloat = 0.0
+    if Lhw_ScreenH() == 480 {
+        heighttmp = 568
+    }else{
+        heighttmp = Lhw_ScreenH()
+    }
+    return heighttmp/667
+	}
+	
+通过输入的值返回不同的屏幕下的缩放后大小：
+
+	//W方向	
+	func Lhw_AdaptW(W: CGFloat) -> CGFloat {
+	    return W*Lhw_RateW()
+	}
+	
+	//H方向
+	func Lhw_SLAdaptH(H: CGFloat) -> CGFloat {
+    if H == 667 && Lhw_ScreenH() == 480 {
+        return 568
+    }else{
+        return H*Lhw_RateH()
+    }
+	}
+	
+另外入如lable，textfield这些控件需要用到字体时考虑下下面的font缩放，当控件大小和字体大小一起缩放时，在一种设备上能显示完整，那么在其他设备上也都能完整显示：
+	
+	func Lhw__font(fontSize:CGFloat) -> UIFont {
+    let fot =  UIFont.systemFont(ofSize: 12)
+    return  fot
+	}
+
+	
+使用：
+
+	       var logolable = UILabel.init(frame: CGRect.init(x: 0, y: Lhw_AdaptH(H: 20), width: Lhw_AdaptW(W: 82), height: Lhw_AdaptW(W: 20)))
+        logolable.font=Lhw__font(fontSize: 13)
+	       
+需要注意的是控件位置，大小需要考虑父控件是否缩放再考虑是否需要让子空间缩放，像系统导航栏，tabbar这个固定大小的控件作为父控件时，在其上放置子空间建议不用缩放       
+图片控件横向与纵向一起缩放时，图片也是不会变形的
+	
